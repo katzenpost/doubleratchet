@@ -787,7 +787,7 @@ func (r *Ratchet) Unmarshal(s *State) error {
 
 	var tmp [keySize]byte
 	if !unmarshalKey(&tmp, s.RootKey) {
-		return errSerialisedKeyLength
+		panic(errSerialisedKeyLength)
 	}
 
 	var tmpA, tmpB, tmpC, tmpD [publicKeySize]byte
@@ -795,7 +795,7 @@ func (r *Ratchet) Unmarshal(s *State) error {
 		!unmarshalKey(&tmpB, s.TheirIdentityPublic) ||
 		!unmarshalKey(&tmpC, s.MyIdentityPrivate) ||
 		!unmarshalKey(&tmpD, s.MyIdentityPublic) {
-		return errSerialisedKeyLength
+		panic(errSerialisedKeyLength)
 	}
 
 	var tmpE, tmpF, tmpG, tmpH, tmpI, tmpJ, tmpK, tmpL [keySize]byte
@@ -807,7 +807,7 @@ func (r *Ratchet) Unmarshal(s *State) error {
 		!unmarshalKey(&tmpJ, s.RecvChainKey) ||
 		!unmarshalKey(&tmpK, s.SendRatchetPrivate) ||
 		!unmarshalKey(&tmpL, s.RecvRatchetPublic) {
-		return errSerialisedKeyLength
+		panic(errSerialisedKeyLength)
 
 	}
 
@@ -834,7 +834,7 @@ func (r *Ratchet) Unmarshal(s *State) error {
 		var tmpE, tmpF [publicKeySize]byte
 		if !unmarshalKey(&tmpE, s.Private0) ||
 			!unmarshalKey(&tmpF, s.Private1) {
-			return errSerialisedKeyLength
+			panic(errSerialisedKeyLength)
 		}
 		r.kxPrivate0.Destroy()
 		r.kxPrivate1.Destroy()
@@ -853,14 +853,14 @@ func (r *Ratchet) Unmarshal(s *State) error {
 	for _, saved := range s.SavedKeys {
 		var headerKey [keySize]byte
 		if !unmarshalKey(&headerKey, saved.HeaderKey) {
-			return errSerialisedKeyLength
+			panic(errSerialisedKeyLength)
 		}
 
 		messageKeys := make(map[uint32]savedKey)
 		for _, messageKey := range saved.MessageKeys {
 			var savedKey savedKey
 			if !unmarshalKey(&savedKey.key, messageKey.Key) {
-				return errSerialisedKeyLength
+				panic(errSerialisedKeyLength)
 			}
 
 			savedKey.timestamp = time.Unix(messageKey.CreationTime, 0)
