@@ -14,7 +14,8 @@ import (
 	"crypto/ed25519"
 	"github.com/awnumar/memguard"
 	"github.com/katzenpost/core/crypto/extra25519"
-	"github.com/ugorji/go/codec"
+	"github.com/fxamacker/cbor/v2"
+
 	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/secretbox"
 	"golang.org/x/crypto/sha3"
@@ -22,7 +23,6 @@ import (
 
 const ()
 
-var cborHandle = new(codec.CborHandle)
 
 // KeyExchange is structure containing the public keys
 type KeyExchange struct {
@@ -182,9 +182,8 @@ func (r *Ratchet) CreateKeyExchange() (*SignedKeyExchange, error) {
 		return nil, err
 	}
 
-	serialized := []byte{}
-	enc := codec.NewEncoderBytes(&serialized, cborHandle)
-	if err := enc.Encode(kx); err != nil {
+	serialized, err := cbor.Marshal(kx)
+	if err != nil {
 		return nil, err
 	}
 
@@ -249,7 +248,7 @@ func (r *Ratchet) ProcessKeyExchange(signedKeyExchange *SignedKeyExchange) error
 	copy(sig[:], signedKeyExchange.Signature)
 
 	kx := new(KeyExchange)
-	err := codec.NewDecoderBytes(signedKeyExchange.Signed, cborHandle).Decode(&kx)
+	err := cbor.Unmarshal(signedKeyExchange.Signed, &kx)
 	if err != nil {
 		return err
 	}
@@ -698,13 +697,7 @@ func dupLockedBuffer(key *memguard.LockedBuffer) []byte {
 // MarshalBinary transforms the object into a stream
 func (r *Ratchet) MarshalBinary() (data []byte, err error) {
 	s := r.Marshal(time.Now(), RatchetKeyMaxLifetime)
-	var serialized []byte
-	enc := codec.NewEncoderBytes(&serialized, new(codec.CborHandle))
-	if err := enc.Encode(s); err != nil {
-		return nil, err
-	}
-
-	return serialized, nil
+	return cbor.Marshal(s)
 }
 
 // Marshal transforms the object into a stream
@@ -767,11 +760,7 @@ var errSerialisedKeyLength = errors.New("ratchet: bad serialised key length")
 // UnmarshalBinary transforms the stream into the object
 func (r *Ratchet) UnmarshalBinary(data []byte) error {
 	state := State{}
-	err := codec.NewDecoderBytes(data, cborHandle).Decode(&state)
-	if err != nil {
-		return err
-	}
-	return r.Unmarshal(&state)
+	return cbor.Unmarshal(data, &state)
 }
 
 // Unmarshal transforms the stream into the object
