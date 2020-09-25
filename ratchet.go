@@ -736,7 +736,10 @@ var errSerialisedKeyLength = errors.New("ratchet: bad serialised key length")
 // UnmarshalBinary transforms the stream into the object
 func (r *Ratchet) UnmarshalBinary(data []byte) error {
 	state := State{}
-	return cbor.Unmarshal(data, &state)
+	if err := cbor.Unmarshal(data, &state); err != nil {
+		return err
+	}
+	return r.Unmarshal(&state)
 }
 
 // Unmarshal transforms the stream into the object
