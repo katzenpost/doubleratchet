@@ -51,6 +51,28 @@ type SavedKeys struct {
 	MessageKeys []*MessageKey
 }
 
+// UnmarshalBinary instantiates memguard.LockedBuffer instances for each deserialized key
+func (s *SavedKeys) UnmarshalBinary(data []byte) error {
+	type messageKey struct {
+		Num uint32
+		Key []byte
+		CreationTime int64
+	}
+	type savedKeys struct {
+		header []byte
+		messageKeys []*messageKey
+	}
+	tmp := &savedKeys{}
+
+	cbor.Unmarshal(data, &tmp)
+	s.HeaderKey = memguard.NewBufferFromBytes(tmp.header)
+	for _, m := range tmp.messageKeys {
+		s.MessageKeys = append(s.MessageKeys, &MessageKey{Num: m.Num,
+		Key: memguard.NewBufferFromBytes(m.Key), CreationTime: m.CreationTime})
+	}
+	return nil
+}
+
 // State constains all the data associated with a ratchet
 type State struct {
 	TheirSigningPublic  []byte
