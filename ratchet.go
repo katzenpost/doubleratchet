@@ -744,54 +744,58 @@ func (r *Ratchet) UnmarshalBinary(data []byte) error {
 
 // Unmarshal transforms the stream into the object
 func (r *Ratchet) Unmarshal(s *State) error {
+	// Melt all the LockedBuffer fields
+	r.TheirSigningPublic.Melt()
+	r.TheirIdentityPublic.Melt()
 	r.MySigningPublic.Melt()
 	r.MySigningPrivate.Melt()
+	r.MyIdentityPrivate.Melt()
+	r.MyIdentityPublic.Melt()
+	r.rootKey.Melt()
+	r.sendHeaderKey.Melt()
+	r.recvHeaderKey.Melt()
+	r.nextSendHeaderKey.Melt()
+	r.nextRecvHeaderKey.Melt()
+	r.sendChainKey.Melt()
+	r.recvChainKey.Melt()
+	r.sendRatchetPrivate.Melt()
+	r.recvRatchetPublic.Melt()
+	r.kxPrivate0.Melt()
+	r.kxPrivate1.Melt()
+
+	defer r.TheirSigningPublic.Freeze()
+	defer r.TheirIdentityPublic.Freeze()
+	defer r.MySigningPublic.Freeze()
+	defer r.MySigningPrivate.Freeze()
+	defer r.MyIdentityPrivate.Freeze()
+	defer r.MyIdentityPublic.Freeze()
+	defer r.rootKey.Freeze()
+	defer r.sendHeaderKey.Freeze()
+	defer r.recvHeaderKey.Freeze()
+	defer r.nextSendHeaderKey.Freeze()
+	defer r.nextRecvHeaderKey.Freeze()
+	defer r.sendChainKey.Freeze()
+	defer r.recvChainKey.Freeze()
+	defer r.sendRatchetPrivate.Freeze()
+	defer r.recvRatchetPublic.Freeze()
+	defer r.kxPrivate0.Freeze()
+	defer r.kxPrivate1.Freeze()
 
 	r.MySigningPublic.Copy(s.MySigningPublic)
 	r.MySigningPrivate.Copy(s.MySigningPrivate)
-
-	defer r.MySigningPublic.Freeze()
-	defer r.MySigningPrivate.Freeze()
-
-	var tmp [keySize]byte
-	if !unmarshalKey(&tmp, s.RootKey) {
-		return errSerialisedKeyLength
-	}
-
-	var tmpA, tmpB, tmpC, tmpD [publicKeySize]byte
-	if !unmarshalKey(&tmpA, s.TheirSigningPublic) ||
-		!unmarshalKey(&tmpB, s.TheirIdentityPublic) ||
-		!unmarshalKey(&tmpC, s.MyIdentityPrivate) ||
-		!unmarshalKey(&tmpD, s.MyIdentityPublic) {
-		return errSerialisedKeyLength
-	}
-
-	var tmpE, tmpF, tmpG, tmpH, tmpI, tmpJ, tmpK, tmpL [keySize]byte
-	if !unmarshalKey(&tmpE, s.SendHeaderKey) ||
-		!unmarshalKey(&tmpF, s.RecvHeaderKey) ||
-		!unmarshalKey(&tmpG, s.NextSendHeaderKey) ||
-		!unmarshalKey(&tmpH, s.NextRecvHeaderKey) ||
-		!unmarshalKey(&tmpI, s.SendChainKey) ||
-		!unmarshalKey(&tmpJ, s.RecvChainKey) ||
-		!unmarshalKey(&tmpK, s.SendRatchetPrivate) ||
-		!unmarshalKey(&tmpL, s.RecvRatchetPublic) {
-		return errSerialisedKeyLength
-
-	}
-
-	r.TheirSigningPublic = memguard.NewBufferFromBytes(tmpA[:])
-	r.TheirIdentityPublic = memguard.NewBufferFromBytes(tmpB[:])
-	r.MyIdentityPrivate = memguard.NewBufferFromBytes(tmpC[:])
-	r.MyIdentityPublic = memguard.NewBufferFromBytes(tmpD[:])
-	r.rootKey = memguard.NewBufferFromBytes(tmp[:])
-	r.sendHeaderKey = memguard.NewBufferFromBytes(tmpE[:])
-	r.recvHeaderKey = memguard.NewBufferFromBytes(tmpF[:])
-	r.nextSendHeaderKey = memguard.NewBufferFromBytes(tmpG[:])
-	r.nextRecvHeaderKey = memguard.NewBufferFromBytes(tmpH[:])
-	r.sendChainKey = memguard.NewBufferFromBytes(tmpI[:])
-	r.recvChainKey = memguard.NewBufferFromBytes(tmpJ[:])
-	r.sendRatchetPrivate = memguard.NewBufferFromBytes(tmpK[:])
-	r.recvRatchetPublic = memguard.NewBufferFromBytes(tmpL[:])
+	r.rootKey.Copy(s.RootKey)
+	r.TheirSigningPublic.Copy(s.TheirSigningPublic)
+	r.TheirIdentityPublic.Copy(s.TheirIdentityPublic)
+	r.MyIdentityPrivate.Copy(s.MyIdentityPrivate)
+	r.MyIdentityPublic.Copy(s.MyIdentityPublic)
+	r.sendHeaderKey.Copy(s.SendHeaderKey)
+	r.recvHeaderKey.Copy(s.RecvHeaderKey)
+	r.nextSendHeaderKey.Copy(s.NextSendHeaderKey)
+	r.nextRecvHeaderKey.Copy(s.NextRecvHeaderKey)
+	r.sendChainKey.Copy(s.SendChainKey)
+	r.recvChainKey.Copy(s.RecvChainKey)
+	r.sendRatchetPrivate.Copy(s.SendRatchetPrivate)
+	r.recvRatchetPublic.Copy(s.RecvRatchetPublic)
 
 	r.sendCount = s.SendCount
 	r.recvCount = s.RecvCount
@@ -799,23 +803,11 @@ func (r *Ratchet) Unmarshal(s *State) error {
 	r.ratchet = s.Ratchet
 
 	if len(s.Private0) > 0 {
-		var tmpE, tmpF [publicKeySize]byte
-		if !unmarshalKey(&tmpE, s.Private0) ||
-			!unmarshalKey(&tmpF, s.Private1) {
-			return errSerialisedKeyLength
-		}
-		r.kxPrivate0.Destroy()
-		r.kxPrivate1.Destroy()
-		r.kxPrivate0 = memguard.NewBufferFromBytes(tmpE[:])
-		r.kxPrivate1 = memguard.NewBufferFromBytes(tmpF[:])
+		r.kxPrivate0.Copy(s.Private0)
+		r.kxPrivate1.Copy(s.Private0)
 	} else {
-		r.kxPrivate0.Melt()
-		r.kxPrivate1.Melt()
 		r.kxPrivate0.Wipe()
 		r.kxPrivate1.Wipe()
-
-		defer r.kxPrivate0.Freeze()
-		defer r.kxPrivate1.Freeze()
 	}
 
 	for _, saved := range s.SavedKeys {
