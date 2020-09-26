@@ -59,16 +59,20 @@ func (s *SavedKeys) UnmarshalBinary(data []byte) error {
 		CreationTime int64
 	}
 	type savedKeys struct {
-		header []byte
+		headerKey []byte
 		messageKeys []*messageKey
 	}
 	tmp := &savedKeys{}
 
 	cbor.Unmarshal(data, &tmp)
-	s.HeaderKey = memguard.NewBufferFromBytes(tmp.header)
-	for _, m := range tmp.messageKeys {
-		s.MessageKeys = append(s.MessageKeys, &MessageKey{Num: m.Num,
-		Key: memguard.NewBufferFromBytes(m.Key), CreationTime: m.CreationTime})
+	if len(tmp.headerKey) == keySize {
+		s.HeaderKey = memguard.NewBufferFromBytes(tmp.headerKey)
+		for _, m := range tmp.messageKeys {
+			if len(m.Key) == keySize {
+				s.MessageKeys = append(s.MessageKeys, &MessageKey{Num: m.Num,
+				Key: memguard.NewBufferFromBytes(m.Key), CreationTime: m.CreationTime})
+			}
+		}
 	}
 	return nil
 }
