@@ -723,14 +723,6 @@ func (r *Ratchet) Marshal(now time.Time, lifetime time.Duration) *State {
 	return s
 }
 
-func unmarshalKey(dst *[keySize]byte, src []byte) bool {
-	if len(src) != keySize {
-		return false
-	}
-	copy(dst[:], src)
-	return true
-}
-
 var errSerialisedKeyLength = errors.New("ratchet: bad serialised key length")
 
 // UnmarshalBinary transforms the stream into the object
