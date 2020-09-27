@@ -399,12 +399,17 @@ func (r *Ratchet) CompleteKeyExchange(kx *KeyExchange) error {
 		deriveKey(r.nextSendHeaderKey, nextHeaderKeyLabel, h)
 		deriveKey(r.nextRecvHeaderKey, nextHeaderKeyLabel, h)
 		deriveKey(r.recvChainKey, chainKeyLabel, h)
+		// perhaps we should actually implement as methods on Ratchet...
+		r.recvRatchetPublic.Melt()
+		defer r.recvRatchetPublic.Freeze()
 		r.recvRatchetPublic.Copy(kx.Dh1)
 	} else {
 		deriveKey(r.sendHeaderKey, headerKeyLabel, h)
 		deriveKey(r.nextRecvHeaderKey, nextHeaderKeyLabel, h)
 		deriveKey(r.nextSendHeaderKey, nextHeaderKeyLabel, h)
 		deriveKey(r.sendChainKey, chainKeyLabel, h)
+		r.sendRatchetPrivate.Melt()
+		defer r.sendRatchetPrivate.Melt()
 		r.sendRatchetPrivate.Copy(r.kxPrivate1.Bytes())
 	}
 
