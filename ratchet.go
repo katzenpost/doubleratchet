@@ -320,6 +320,8 @@ func (r *Ratchet) ProcessKeyExchange(signedKeyExchange *SignedKeyExchange) error
 		r.TheirSigningPublic = memguard.NewBuffer(publicKeySize)
 	}
 
+	r.TheirSigningPublic.Melt()
+	defer r.TheirSigningPublic.Freeze()
 	r.TheirSigningPublic.Copy(kx.PublicKey)
 
 	var ed25519Public, curve25519Public [publicKeySize]byte
@@ -333,6 +335,8 @@ func (r *Ratchet) ProcessKeyExchange(signedKeyExchange *SignedKeyExchange) error
 		r.TheirIdentityPublic = memguard.NewBuffer(publicKeySize)
 	}
 
+	r.TheirIdentityPublic.Melt()
+	defer r.TheirIdentityPublic.Freeze()
 	r.TheirIdentityPublic.Copy(kx.IdentityPublic)
 
 	return r.CompleteKeyExchange(kx)
