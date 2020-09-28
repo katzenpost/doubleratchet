@@ -101,6 +101,10 @@ func (s *DoubleRatchetSuite) Test_RealKeyExchange(c *C) {
 		panic(err)
 	}
 
+	// reinit the ratchets
+	a = reinitRatchet(c, a)
+	b = reinitRatchet(c, b)
+
 	// create the key exchange blobs
 	akx, err := a.CreateKeyExchange()
 	if err != nil {
@@ -120,6 +124,10 @@ func (s *DoubleRatchetSuite) Test_RealKeyExchange(c *C) {
 	if err != nil {
 		panic(err)
 	}
+
+	// reinit the ratchets
+	a = reinitRatchet(c, a)
+	b = reinitRatchet(c, b)
 
 	// try to encrypt and decrypt a message
 	msg := []byte("test message")
@@ -227,17 +235,12 @@ const (
 )
 
 func reinitRatchet(c *C, r *Ratchet) *Ratchet {
-	state := r.Marshal(now(), 1*time.Hour)
 	newR, err := InitRatchet(rand.Reader)
 	c.Assert(err, IsNil)
 
-	newR.MyIdentityPrivate = r.MyIdentityPrivate
-	newR.TheirIdentityPublic = r.TheirIdentityPublic
-	newR.MySigningPublic = r.MySigningPublic
-	newR.TheirSigningPublic = r.TheirSigningPublic
-
-	err = newR.Unmarshal(state)
+	rs, err := r.MarshalBinary()
 	c.Assert(err, IsNil)
+	newR.UnmarshalBinary(rs)
 
 	return newR
 
@@ -337,35 +340,4 @@ func (s *DoubleRatchetSuite) Test_RatchetDroppedMessages(c *C) {
 		{sendA, deliver, -1},
 		{sendB, deliver, -1},
 	})
-}
-
-func (s *DoubleRatchetSuite) Test_serialize_savedkeys(c *C) {
-	a, b := pairedRatchet(c)
-	msg := []byte("test message")
-	encrypted1 := a.Encrypt(nil, msg)
-	encrypted2 := a.Encrypt(nil, msg)
-	encrypted3 := a.Encrypt(nil, msg)
-	result, err := b.Decrypt(encrypted2)
-	c.Assert(err, IsNil)
-
-	c.Assert(msg, DeepEquals, result)
-	serialized, err := a.MarshalBinary()
-	c.Assert(err, IsNil)
-	serialized2, err := b.MarshalBinary()
-	c.Assert(err, IsNil)
-
-
-	r, err := InitRatchet(rand.Reader)
-	c.Assert(err, IsNil)
-
-	r.UnmarshalBinary(serialized)
-
-	t, err := InitRatchet(rand.Reader)
-	c.Assert(err, IsNil)
-	t.UnmarshalBinary(serialized2)
-	result, err = t.Decrypt(encrypted3)
-	c.Assert(err, IsNil)
-	result, err = t.Decrypt(encrypted1)
-	c.Assert(err, IsNil)
-
 }
