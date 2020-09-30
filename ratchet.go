@@ -13,8 +13,8 @@ import (
 
 	"crypto/ed25519"
 	"github.com/awnumar/memguard"
-	"github.com/katzenpost/core/crypto/extra25519"
 	"github.com/fxamacker/cbor/v2"
+	"github.com/katzenpost/core/crypto/extra25519"
 
 	"golang.org/x/crypto/curve25519"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -22,7 +22,6 @@ import (
 )
 
 const ()
-
 
 // KeyExchange is structure containing the public keys
 type KeyExchange struct {
@@ -54,12 +53,12 @@ type SavedKeys struct {
 // MarshalBinary implements encoding.BinaryUnmarshaler interface
 func (s *SavedKeys) MarshalBinary() ([]byte, error) {
 	type messageKey struct {
-		Num uint32
-		Key []byte
+		Num          uint32
+		Key          []byte
 		CreationTime int64
 	}
 	type savedKeys struct {
-		HeaderKey []byte
+		HeaderKey   []byte
 		MessageKeys []*messageKey
 	}
 	tmp := &savedKeys{}
@@ -75,12 +74,12 @@ func (s *SavedKeys) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary instantiates memguard.LockedBuffer instances for each deserialized key
 func (s *SavedKeys) UnmarshalBinary(data []byte) error {
 	type messageKey struct {
-		Num uint32
-		Key []byte
+		Num          uint32
+		Key          []byte
 		CreationTime int64
 	}
 	type savedKeys struct {
-		HeaderKey []byte
+		HeaderKey   []byte
 		MessageKeys []*messageKey
 	}
 	tmp := &savedKeys{}
@@ -91,7 +90,7 @@ func (s *SavedKeys) UnmarshalBinary(data []byte) error {
 		for _, m := range tmp.MessageKeys {
 			if len(m.Key) == keySize {
 				s.MessageKeys = append(s.MessageKeys, &MessageKey{Num: m.Num,
-				Key: memguard.NewBufferFromBytes(m.Key), CreationTime: m.CreationTime})
+					Key: memguard.NewBufferFromBytes(m.Key), CreationTime: m.CreationTime})
 			}
 		}
 	}
