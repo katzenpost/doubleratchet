@@ -966,4 +966,16 @@ func DestroyRatchet(r *Ratchet) {
 
 	r.kxPrivate0.Destroy()
 	r.kxPrivate1.Destroy()
+
+	for headerKey, keyMap := range r.saved {
+		for _, savedKey := range keyMap {
+			for i := 0; i<len(savedKey.key); i++ {
+				savedKey.key[i] = 0x0
+			}
+		}
+		for i := 0; i<len(headerKey); i++ {
+			headerKey[i] = 0x0
+		}
+	}
+	r.saved = nil
 }
