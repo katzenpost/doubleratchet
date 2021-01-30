@@ -862,4 +862,13 @@ func DestroyRatchet(r *Ratchet) {
 
 	r.kxPrivate0.Destroy()
 	r.kxPrivate1.Destroy()
+
+	// range over the savedKeys and destroy them
+	for headerKey, seqMap := range r.saved {
+		for _, savedKey := range seqMap {
+			savedKey.key.Destroy()
+		}
+		headerKey.Destroy()
+	}
+	r.saved = nil
 }
