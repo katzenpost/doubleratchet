@@ -721,7 +721,7 @@ func (r *Ratchet) mergeSavedKeys(newKeys map[*memguard.LockedBuffer]map[uint32]s
 	}
 }
 
-func (r *Ratchet) wipeSavedKeys() {
+func (r *Ratchet) WipeSavedKeys() {
 	for headerKey, keys := range r.saved {
 		for _, savedKey := range keys {
 			savedKey.key.Destroy()
@@ -958,5 +958,5 @@ func DestroyRatchet(r *Ratchet) {
 	}
 	r.kxPQPrivate0 = nil
 	r.kxPQPrivate1 = nil
-	r.wipeSavedKeys()
+	r.WipeSavedKeys()
 }
